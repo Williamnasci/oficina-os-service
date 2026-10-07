@@ -1,0 +1,90 @@
+name: oficina-fase4-bdd
+x-app: &app
+  restart: unless-stopped
+  environment: &env
+    NODE_ENV: production
+    APP_ENV: test
+    JWT_SECRET: ${JWT_SECRET:-fase4-local-only-jwt-secret-32-characters}
+    AMQP_URL: amqp://oficina:local-broker-password@rabbitmq:5672
+    DD_TRACE_ENABLED: 'false'
+    DD_ENV: local-fase4
+    DD_LOGS_INJECTION: 'true'
+  depends_on:
+    rabbitmq: { condition: service_healthy }
+services:
+  postgres-os:
+    image: postgres:16-alpine
+    environment: { POSTGRES_USER: os, POSTGRES_PASSWORD: local-os-password, POSTGRES_DB: os }
+    ports: ['127.0.0.1:15434:5432']
+    volumes: [os-data:/var/lib/postgresql/data]
+    healthcheck: { test: ['CMD-SHELL', 'pg_isready -U os -d os'], interval: 3s, timeout: 3s, retries: 30 }
+  postgres-billing:
+    image: postgres:16-alpine
+    environment: { POSTGRES_USER: billing, POSTGRES_PASSWORD: local-billing-password, POSTGRES_DB: billing }
+    ports: ['127.0.0.1:15435:5432']
+    volumes: [billing-data:/var/lib/postgresql/data]
+    healthcheck: { test: ['CMD-SHELL', 'pg_isready -U billing -d billing'], interval: 3s, timeout: 3s, retries: 30 }
+  mongodb:
+    image: mongo:8
+    environment: { MONGO_INITDB_ROOT_USERNAME: execution, MONGO_INITDB_ROOT_PASSWORD: local-execution-password }
+    ports: ['127.0.0.1:17018:27017']
+    volumes: [execution-data:/data/db]
+    healthcheck: { test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"], interval: 5s, timeout: 5s, retries: 30 }
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment: { RABBITMQ_DEFAULT_USER: oficina, RABBITMQ_DEFAULT_PASS: local-broker-password }
+    ports: ['127.0.0.1:15674:15672', '127.0.0.1:5674:5672']
+    volumes: [rabbit-data:/var/lib/rabbitmq]
+    healthcheck: { test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping'], interval: 5s, timeout: 10s, retries: 30 }
+  payment-simulator:
+    image: node:24-alpine
+    working_dir: /simulator
+    command: ['node', 'payment-simulator.mjs']
+    volumes: ['./payment-simulator.mjs:/simulator/payment-simulator.mjs:ro']
+    ports: ['127.0.0.1:18083:3000']
+  os:
+    <<: *app
+    build: ..
+    ports: ['127.0.0.1:18080:3000']
+    environment:
+      <<: *env
+      DATABASE_URL: postgresql://os:local-os-password@postgres-os:5432/os
+      DD_SERVICE: oficina-os-service
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+      postgres-os: { condition: service_healthy }
+  billing:
+    <<: *app
+    build: ../../oficina-billing-service
+    ports: ['127.0.0.1:18081:3000']
+    environment:
+      <<: *env
+      DATABASE_URL: postgresql://billing:local-billing-password@postgres-billing:5432/billing
+      DD_SERVICE: oficina-billing-service
+      MP_ACCESS_TOKEN: local-simulator-token
+      MP_TEST_API_URL: http://payment-simulator:3000
+      MP_COLLECTOR_ID: '12345'
+      MP_LIVE_MODE: 'false'
+      MP_WEBHOOK_SECRET: local-simulator-webhook-secret
+      MP_NOTIFICATION_URL: https://test.invalid/payments/webhook
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+      postgres-billing: { condition: service_healthy }
+      payment-simulator: { condition: service_started }
+  execution:
+    <<: *app
+    build: ../../oficina-execution-service
+    ports: ['127.0.0.1:18082:3000']
+    environment:
+      <<: *env
+      DATABASE_URL: mongodb://execution:local-execution-password@mongodb:27017/execution?authSource=admin
+      DD_SERVICE: oficina-execution-service
+      ENABLE_TEST_FAULTS: 'true'
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+      mongodb: { condition: service_healthy }
+volumes:
+  os-data:
+  billing-data:
+  execution-data:
+  rabbit-data:

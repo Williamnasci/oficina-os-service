@@ -1,0 +1,307 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Oficina Os Service",
+    "version": "0.2.0"
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/service-orders/opening": {
+      "post": {
+        "summary": "Abrir OS",
+        "responses": {
+          "201": {
+            "description": "Sucesso"
+          },
+          "400": {
+            "description": "Payload inválido"
+          },
+          "401": {
+            "description": "Autenticação inválida"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "409": {
+            "description": "Conflito de idempotência"
+          },
+          "422": {
+            "description": "Regra de negócio inválida"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Opening"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8
+            }
+          }
+        ]
+      }
+    },
+    "/service-orders/{id}": {
+      "get": {
+        "summary": "Consultar OS",
+        "responses": {
+          "200": {
+            "description": "Sucesso"
+          },
+          "400": {
+            "description": "Payload inválido"
+          },
+          "401": {
+            "description": "Autenticação inválida"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "409": {
+            "description": "Conflito de idempotência"
+          },
+          "422": {
+            "description": "Regra de negócio inválida"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/service-orders/{id}/status": {
+      "get": {
+        "summary": "Status e histórico",
+        "responses": {
+          "200": {
+            "description": "Sucesso"
+          },
+          "400": {
+            "description": "Payload inválido"
+          },
+          "401": {
+            "description": "Autenticação inválida"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "409": {
+            "description": "Conflito de idempotência"
+          },
+          "422": {
+            "description": "Regra de negócio inválida"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/service-orders/{id}/deliver": {
+      "post": {
+        "summary": "Entregar veículo",
+        "responses": {
+          "200": {
+            "description": "Sucesso"
+          },
+          "400": {
+            "description": "Payload inválido"
+          },
+          "401": {
+            "description": "Autenticação inválida"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "409": {
+            "description": "Conflito de idempotência"
+          },
+          "422": {
+            "description": "Regra de negócio inválida"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "security": [],
+        "summary": "/health",
+        "responses": {
+          "200": {
+            "description": "Operacional"
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "security": [],
+        "summary": "/ready",
+        "responses": {
+          "200": {
+            "description": "Operacional"
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "security": [],
+        "summary": "/metrics",
+        "responses": {
+          "200": {
+            "description": "Operacional"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Opening": {
+        "type": "object",
+        "required": [
+          "customer",
+          "vehicle"
+        ],
+        "properties": {
+          "customer": {
+            "type": "object",
+            "required": [
+              "name",
+              "documentType",
+              "document",
+              "email"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "documentType": {
+                "type": "string",
+                "enum": [
+                  "CPF",
+                  "CNPJ"
+                ]
+              },
+              "document": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "phone": {
+                "type": "string"
+              }
+            }
+          },
+          "vehicle": {
+            "type": "object",
+            "required": [
+              "licensePlate",
+              "brand",
+              "model",
+              "year"
+            ],
+            "properties": {
+              "licensePlate": {
+                "type": "string"
+              },
+              "brand": {
+                "type": "string"
+              },
+              "model": {
+                "type": "string"
+              },
+              "year": {
+                "type": "integer"
+              }
+            }
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "serviceId": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "stockItems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "stockItemId": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
