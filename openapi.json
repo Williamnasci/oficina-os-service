@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Oficina Os Service",
-    "version": "0.2.0"
+    "version": "0.3.0"
   },
   "servers": [
     {
@@ -23,19 +23,19 @@
             "description": "Sucesso"
           },
           "400": {
-            "description": "Payload inválido"
+            "description": "Payload invÃ¡lido"
           },
           "401": {
-            "description": "Autenticação inválida"
+            "description": "AutenticaÃ§Ã£o invÃ¡lida"
           },
           "403": {
-            "description": "Sem permissão"
+            "description": "Sem permissÃ£o"
           },
           "409": {
-            "description": "Conflito de idempotência"
+            "description": "Conflito de idempotÃªncia"
           },
           "422": {
-            "description": "Regra de negócio inválida"
+            "description": "Regra de negÃ³cio invÃ¡lida"
           }
         },
         "requestBody": {
@@ -69,19 +69,19 @@
             "description": "Sucesso"
           },
           "400": {
-            "description": "Payload inválido"
+            "description": "Payload invÃ¡lido"
           },
           "401": {
-            "description": "Autenticação inválida"
+            "description": "AutenticaÃ§Ã£o invÃ¡lida"
           },
           "403": {
-            "description": "Sem permissão"
+            "description": "Sem permissÃ£o"
           },
           "409": {
-            "description": "Conflito de idempotência"
+            "description": "Conflito de idempotÃªncia"
           },
           "422": {
-            "description": "Regra de negócio inválida"
+            "description": "Regra de negÃ³cio invÃ¡lida"
           }
         },
         "parameters": [
@@ -98,25 +98,25 @@
     },
     "/service-orders/{id}/status": {
       "get": {
-        "summary": "Status e histórico",
+        "summary": "Status e histÃ³rico",
         "responses": {
           "200": {
             "description": "Sucesso"
           },
           "400": {
-            "description": "Payload inválido"
+            "description": "Payload invÃ¡lido"
           },
           "401": {
-            "description": "Autenticação inválida"
+            "description": "AutenticaÃ§Ã£o invÃ¡lida"
           },
           "403": {
-            "description": "Sem permissão"
+            "description": "Sem permissÃ£o"
           },
           "409": {
-            "description": "Conflito de idempotência"
+            "description": "Conflito de idempotÃªncia"
           },
           "422": {
-            "description": "Regra de negócio inválida"
+            "description": "Regra de negÃ³cio invÃ¡lida"
           }
         },
         "parameters": [
@@ -133,25 +133,25 @@
     },
     "/service-orders/{id}/deliver": {
       "post": {
-        "summary": "Entregar veículo",
+        "summary": "Entregar veÃ­culo",
         "responses": {
           "200": {
             "description": "Sucesso"
           },
           "400": {
-            "description": "Payload inválido"
+            "description": "Payload invÃ¡lido"
           },
           "401": {
-            "description": "Autenticação inválida"
+            "description": "AutenticaÃ§Ã£o invÃ¡lida"
           },
           "403": {
-            "description": "Sem permissão"
+            "description": "Sem permissÃ£o"
           },
           "409": {
-            "description": "Conflito de idempotência"
+            "description": "Conflito de idempotÃªncia"
           },
           "422": {
-            "description": "Regra de negócio inválida"
+            "description": "Regra de negÃ³cio invÃ¡lida"
           }
         },
         "parameters": [
@@ -198,6 +198,436 @@
           }
         }
       }
+    },
+    "/customers": {
+      "post": {
+        "summary": "POST customers (admin)",
+        "description": "Contrato extraído da Fase 3. DELETE desativa o cadastro; preserva histórico.",
+        "responses": {
+          "201": {
+            "description": "Sucesso"
+          },
+          "400": {
+            "description": "DTO inválido"
+          },
+          "401": {
+            "description": "Autenticação inválida"
+          },
+          "403": {
+            "description": "Requer admin"
+          },
+          "404": {
+            "description": "Cadastro inexistente"
+          },
+          "409": {
+            "description": "Documento/placa já cadastrado"
+          },
+          "422": {
+            "description": "Regra de domínio inválida"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerCreate"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "GET customers (admin)",
+        "description": "Contrato extraído da Fase 3. DELETE desativa o cadastro; preserva histórico.",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CustomerResponse"
+                      }
+                    },
+                    {
+                      "$ref": "#/components/schemas/CustomerResponse"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "DTO inválido"
+          },
+          "401": {
+            "description": "Autenticação inválida"
+          },
+          "403": {
+            "description": "Requer admin"
+          },
+          "404": {
+            "description": "Cadastro inexistente"
+          },
+          "409": {
+            "description": "Documento/placa já cadastrado"
+          },
+          "422": {
+            "description": "Regra de domínio inválida"
+          }
+        },
+        "parameters": [
+          {
+            "in": "query",
+            "name": "document",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Consulta única por CPF/CNPJ normalizado; sem parâmetro retorna lista."
+          }
+        ]
+      }
+    },
+    "/customers/{id}": {
+      "get": {
+        "summary": "GET customers (admin)",
+        "description": "Contrato extraído da Fase 3. DELETE desativa o cadastro; preserva histórico.",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "DTO inválido"
+          },
+          "401": {
+            "description": "Autenticação inválida"
+          },
+          "403": {
+            "description": "Requer admin"
+          },
+          "404": {
+            "description": "Cadastro inexistente"
+          },
+          "409": {
+            "description": "Documento/placa já cadastrado"
+          },
+          "422": {
+            "description": "Regra de domínio inválida"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "patch": {
+        "summary": "PATCH customers (admin)",
+        "description": "Contrato extraído da Fase 3. DELETE desativa o cadastro; preserva histórico.",
+        "responses": {
+          "204": {
+            "description": "Sucesso"
+          },
+          "400": {
+            "description": "DTO inválido"
+          },
+          "401": {
+            "description": "Autenticação inválida"
+          },
+          "403": {
+            "description": "Requer admin"
+          },
+          "404": {
+            "description": "Cadastro inexistente"
+          },
+          "409": {
+            "description": "Documento/placa já cadastrado"
+          },
+          "422": {
+            "description": "Regra de domínio inválida"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerUpdate"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "DELETE customers (admin)",
+        "description": "Contrato extraído da Fase 3. DELETE desativa o cadastro; preserva histórico.",
+        "responses": {
+          "204": {
+            "description": "Sucesso"
+          },
+          "400": {
+            "description": "DTO inválido"
+          },
+          "401": {
+            "description": "Autenticação inválida"
+          },
+          "403": {
+            "description": "Requer admin"
+          },
+          "404": {
+            "description": "Cadastro inexistente"
+          },
+          "409": {
+            "description": "Documento/placa já cadastrado"
+          },
+          "422": {
+            "description": "Regra de domínio inválida"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/vehicles": {
+      "post": {
+        "summary": "POST vehicles (admin)",
+        "description": "Contrato extraído da Fase 3. DELETE desativa o cadastro; preserva histórico.",
+        "responses": {
+          "201": {
+            "description": "Sucesso"
+          },
+          "400": {
+            "description": "DTO inválido"
+          },
+          "401": {
+            "description": "Autenticação inválida"
+          },
+          "403": {
+            "description": "Requer admin"
+          },
+          "404": {
+            "description": "Cadastro inexistente"
+          },
+          "409": {
+            "description": "Documento/placa já cadastrado"
+          },
+          "422": {
+            "description": "Regra de domínio inválida"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VehicleCreate"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "GET vehicles (admin)",
+        "description": "Contrato extraído da Fase 3. DELETE desativa o cadastro; preserva histórico.",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VehicleResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "DTO inválido"
+          },
+          "401": {
+            "description": "Autenticação inválida"
+          },
+          "403": {
+            "description": "Requer admin"
+          },
+          "404": {
+            "description": "Cadastro inexistente"
+          },
+          "409": {
+            "description": "Documento/placa já cadastrado"
+          },
+          "422": {
+            "description": "Regra de domínio inválida"
+          }
+        }
+      }
+    },
+    "/vehicles/{id}": {
+      "get": {
+        "summary": "GET vehicles (admin)",
+        "description": "Contrato extraído da Fase 3. DELETE desativa o cadastro; preserva histórico.",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "DTO inválido"
+          },
+          "401": {
+            "description": "Autenticação inválida"
+          },
+          "403": {
+            "description": "Requer admin"
+          },
+          "404": {
+            "description": "Cadastro inexistente"
+          },
+          "409": {
+            "description": "Documento/placa já cadastrado"
+          },
+          "422": {
+            "description": "Regra de domínio inválida"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "patch": {
+        "summary": "PATCH vehicles (admin)",
+        "description": "Contrato extraído da Fase 3. DELETE desativa o cadastro; preserva histórico.",
+        "responses": {
+          "204": {
+            "description": "Sucesso"
+          },
+          "400": {
+            "description": "DTO inválido"
+          },
+          "401": {
+            "description": "Autenticação inválida"
+          },
+          "403": {
+            "description": "Requer admin"
+          },
+          "404": {
+            "description": "Cadastro inexistente"
+          },
+          "409": {
+            "description": "Documento/placa já cadastrado"
+          },
+          "422": {
+            "description": "Regra de domínio inválida"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VehicleUpdate"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "DELETE vehicles (admin)",
+        "description": "Contrato extraído da Fase 3. DELETE desativa o cadastro; preserva histórico.",
+        "responses": {
+          "204": {
+            "description": "Sucesso"
+          },
+          "400": {
+            "description": "DTO inválido"
+          },
+          "401": {
+            "description": "Autenticação inválida"
+          },
+          "403": {
+            "description": "Requer admin"
+          },
+          "404": {
+            "description": "Cadastro inexistente"
+          },
+          "409": {
+            "description": "Documento/placa já cadastrado"
+          },
+          "422": {
+            "description": "Regra de domínio inválida"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -221,8 +651,7 @@
             "required": [
               "name",
               "documentType",
-              "document",
-              "email"
+              "document"
             ],
             "properties": {
               "name": {
@@ -240,10 +669,12 @@
               },
               "email": {
                 "type": "string",
-                "format": "email"
+                "format": "email",
+                "nullable": true
               },
               "phone": {
-                "type": "string"
+                "type": "string",
+                "nullable": true
               }
             }
           },
@@ -266,7 +697,8 @@
                 "type": "string"
               },
               "year": {
-                "type": "integer"
+                "type": "integer",
+                "minimum": 1900
               }
             }
           },
@@ -299,6 +731,182 @@
                 }
               }
             }
+          }
+        }
+      },
+      "CustomerCreate": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "documentType",
+          "document"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "documentType": {
+            "type": "string",
+            "enum": [
+              "CPF",
+              "CNPJ"
+            ]
+          },
+          "document": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "CustomerUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true
+          }
+        }
+      },
+      "CustomerResponse": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "documentType": {
+            "type": "string",
+            "enum": [
+              "CPF",
+              "CNPJ"
+            ]
+          },
+          "document": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "VehicleCreate": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "licensePlate",
+          "brand",
+          "model",
+          "year",
+          "customerId"
+        ],
+        "properties": {
+          "licensePlate": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "year": {
+            "type": "integer",
+            "minimum": 1900
+          },
+          "customerId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "VehicleUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "brand": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "year": {
+            "type": "integer",
+            "minimum": 1900
+          }
+        }
+      },
+      "VehicleResponse": {
+        "type": "object",
+        "properties": {
+          "licensePlate": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "year": {
+            "type": "integer",
+            "minimum": 1900
+          },
+          "customerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       }

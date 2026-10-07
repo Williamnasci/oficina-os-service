@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { openSaga, advance } from '../src/saga.ts';
+import { openSaga, advance } from '../dist/saga.js';
 
 function step(saga, type, id = type) {
   return advance(saga, { id, orderId: saga.orderId, type }, saga.version);

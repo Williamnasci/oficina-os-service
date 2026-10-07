@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { OsService, osRoutes } from '../src/service.mjs';
-import { normalizeDocument, normalizePlate } from '../src/customer.ts';
-import { message } from '../src/infrastructure/contracts.mjs';
+import { OsService, osRoutes } from '../dist/service.mjs';
+import { normalizeDocument, normalizePlate } from '../dist/customer.js';
+import { message } from '../dist/infrastructure/contracts.mjs';
 import { MemoryStore } from './helpers.mjs';
 
 const principal = { sub: 'operator', role: 'operator' };

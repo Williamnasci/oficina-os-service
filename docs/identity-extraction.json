@@ -1,0 +1,248 @@
+[
+  {
+    "source": "src/modules/customers/application/dto/create-customer.dto.ts",
+    "destination": "src/modules/customers/application/dto/create-customer.dto.ts",
+    "source_sha256": "5706e5a5f1d560f99cbc939d4ea0f4691fbd9009514ee6d228170066cb1769a1",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/customers/application/dto/customer-response.dto.ts",
+    "destination": "src/modules/customers/application/dto/customer-response.dto.ts",
+    "source_sha256": "4479d9a7811f3cf533c8df311905edb2dae6a28580d2f6fc802d0519be21d0dd",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/customers/application/dto/update-customer.dto.ts",
+    "destination": "src/modules/customers/application/dto/update-customer.dto.ts",
+    "source_sha256": "e7b355744dfe9238d9bc2125a06379efcc10a97027ad7cac2ee15c5e4445df5c",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/customers/application/use-cases/create-customer.use-case.ts",
+    "destination": "src/modules/customers/application/use-cases/create-customer.use-case.ts",
+    "source_sha256": "cd512e4ffb359b0f022b019141143c2dcd8f1bc379a3c848d91195aca73f59ba",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/customers/application/use-cases/delete-customer.use-case.ts",
+    "destination": "src/modules/customers/application/use-cases/delete-customer.use-case.ts",
+    "source_sha256": "8d9a2f8fb25b8b591f30008bc3e0e83dff5f5e464ca2c9c1696cb9c3891b4052",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/customers/application/use-cases/find-customer-by-document.use-case.ts",
+    "destination": "src/modules/customers/application/use-cases/find-customer-by-document.use-case.ts",
+    "source_sha256": "3ec4d87afa6767cab7e5f2d1238ab96a77bbf47700287d5e29de29eae456289e",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/customers/application/use-cases/get-customer.use-case.ts",
+    "destination": "src/modules/customers/application/use-cases/get-customer.use-case.ts",
+    "source_sha256": "2551f70d6fb40e9074db252521739767c1ce827d807ca924e858929ba6f29a7a",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/customers/application/use-cases/list-customers.use-case.ts",
+    "destination": "src/modules/customers/application/use-cases/list-customers.use-case.ts",
+    "source_sha256": "7202846f93ef14fc7212e70c900ce1e99e21029133a210ee3b0e531aa63d7cbf",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/customers/application/use-cases/update-customer.use-case.ts",
+    "destination": "src/modules/customers/application/use-cases/update-customer.use-case.ts",
+    "source_sha256": "5aaa8653f2cc901640ed60d05aca9e7f3224ceee5d7338bb3fbf79dc6814f01e",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/customers/domain/entities/customer.entity.ts",
+    "destination": "src/modules/customers/domain/entities/customer.entity.ts",
+    "source_sha256": "a2f2724f110ec728b3bba1de815241197a1d91300448dbc785b4a6841a7401a0",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/customers/domain/enums/customer-document-type.enum.ts",
+    "destination": "src/modules/customers/domain/enums/customer-document-type.enum.ts",
+    "source_sha256": "a5e85a6b8f6beca0fef021104a275910373e37df4470e4376edba6a76bd91214",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/customers/domain/repositories/customer.repository.ts",
+    "destination": "src/modules/customers/domain/repositories/customer.repository.ts",
+    "source_sha256": "9c7522edeca1a18e5e2a98ce2bc566e6bfc430ffe2b21454dc3f0bb5c6aecbc5",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/customers/domain/value-objects/customer-document.value-object.ts",
+    "destination": "src/modules/customers/domain/value-objects/customer-document.value-object.ts",
+    "source_sha256": "f0674702368187db486d9756d668649854e7936e0597d80443d50c3f86b1c59a",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/vehicles/application/dto/create-vehicle.dto.ts",
+    "destination": "src/modules/vehicles/application/dto/create-vehicle.dto.ts",
+    "source_sha256": "82e6f2d2157dba306f6f6d11fb6aaada792119aaab2e79e6712ae1f7ef7f4efc",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/vehicles/application/dto/update-vehicle.dto.ts",
+    "destination": "src/modules/vehicles/application/dto/update-vehicle.dto.ts",
+    "source_sha256": "b2b5e7558f31560a9fb33637d4848b54dee04649a0e2c5ea7f2e98424187a5a1",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/vehicles/application/dto/vehicle-response.dto.ts",
+    "destination": "src/modules/vehicles/application/dto/vehicle-response.dto.ts",
+    "source_sha256": "b1954c036eb816e712c3dfcb00a254ca85004b56c626a0e30b14797f6f00fa5d",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/vehicles/application/use-cases/create-vehicle.use-case.ts",
+    "destination": "src/modules/vehicles/application/use-cases/create-vehicle.use-case.ts",
+    "source_sha256": "aeb256943ba5d1e7d9335550604d8d7e77d7d161bd1994d239c8205d3bdad97a",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/vehicles/application/use-cases/delete-vehicle.use-case.ts",
+    "destination": "src/modules/vehicles/application/use-cases/delete-vehicle.use-case.ts",
+    "source_sha256": "bc366f4e4b9aa152780f8ccde295b15e99176f5e5c20fac16d4951ca78108ee4",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/vehicles/application/use-cases/get-vehicle.use-case.ts",
+    "destination": "src/modules/vehicles/application/use-cases/get-vehicle.use-case.ts",
+    "source_sha256": "a04312382b0d3d3eda05474650f064cfaf63567222f02826965ff914caa9c59d",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/vehicles/application/use-cases/list-vehicles.use-case.ts",
+    "destination": "src/modules/vehicles/application/use-cases/list-vehicles.use-case.ts",
+    "source_sha256": "8e9521afedafdb0030ee9f4de33a4089c081e907001b15e9a91337bf9ec26a41",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/vehicles/application/use-cases/update-vehicle.use-case.ts",
+    "destination": "src/modules/vehicles/application/use-cases/update-vehicle.use-case.ts",
+    "source_sha256": "2fff8a99a22b34d559a06f826942dad2fab467c7ed11466cf3e4bab3c88b6213",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/vehicles/domain/entities/vehicle.entity.ts",
+    "destination": "src/modules/vehicles/domain/entities/vehicle.entity.ts",
+    "source_sha256": "4659b2e5a4c1604ca08205df2a1856ff7a59fa24913a4c55c9e39c15aa68d5ed",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/vehicles/domain/repositories/vehicle.repository.ts",
+    "destination": "src/modules/vehicles/domain/repositories/vehicle.repository.ts",
+    "source_sha256": "19bd28491efbb46405c05704b3cabb9cb69864eb01cd72d92c4de299bb1a8631",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/modules/vehicles/domain/value-objects/license-plate.value-object.ts",
+    "destination": "src/modules/vehicles/domain/value-objects/license-plate.value-object.ts",
+    "source_sha256": "80138c5c954a3d3873a1b12fa1ba11c3564edd3b8188e15b91ca5ba3b2fc6e52",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/shared/domain/errors/domain.exception.ts",
+    "destination": "src/shared/domain/errors/domain.exception.ts",
+    "source_sha256": "4e8556f6e6dba9f013383f4be73962849c95e4f201213073212e7aba4ad14954",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "src/shared/domain/unit-of-work.ts",
+    "destination": "src/shared/domain/unit-of-work.ts",
+    "source_sha256": "7d469b7eaf7fa5ae8e13e11117125bb0a1414d9057ae949236fa35ead2993d14",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "test/unit/modules/customers/application/use-cases/create-customer.use-case.spec.ts",
+    "destination": "test/unit/modules/customers/application/use-cases/create-customer.use-case.spec.ts",
+    "source_sha256": "790079c2a9e9be91924af138cb06e026526766ece473db846f0fa04ac1d49d42",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "test/unit/modules/customers/application/use-cases/delete-customer.use-case.spec.ts",
+    "destination": "test/unit/modules/customers/application/use-cases/delete-customer.use-case.spec.ts",
+    "source_sha256": "c9a17eb1b21a47cf3dd95d0e1227459f8486e0b15ab27ddb1c6d4414389b7f5e",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "test/unit/modules/customers/application/use-cases/find-customer-by-document.use-case.spec.ts",
+    "destination": "test/unit/modules/customers/application/use-cases/find-customer-by-document.use-case.spec.ts",
+    "source_sha256": "710504452632e66a1632d2276db15dad92bbd512015777aa407e948e9b0fda51",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "test/unit/modules/customers/application/use-cases/get-customer.use-case.spec.ts",
+    "destination": "test/unit/modules/customers/application/use-cases/get-customer.use-case.spec.ts",
+    "source_sha256": "eca9d733db718279f09edad75301507055e458aa268f76e2954bf724004cfed7",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "test/unit/modules/customers/application/use-cases/list-customers.use-case.spec.ts",
+    "destination": "test/unit/modules/customers/application/use-cases/list-customers.use-case.spec.ts",
+    "source_sha256": "cf83753bc51eb00d494ee43a66bf92489aff7c7f85f6416ac8ea81d169760bae",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "test/unit/modules/customers/application/use-cases/update-customer.use-case.spec.ts",
+    "destination": "test/unit/modules/customers/application/use-cases/update-customer.use-case.spec.ts",
+    "source_sha256": "8b5c7590757a07247681e0eff46f65ae002bef876deb45ac4aec8404a6786f29",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "test/unit/modules/customers/domain/entities/customer.entity.spec.ts",
+    "destination": "test/unit/modules/customers/domain/entities/customer.entity.spec.ts",
+    "source_sha256": "692b6e3ab6785e740d76ed1dfc6db87a4d86336f3f9a191bdd4521e33e59b1be",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "test/unit/modules/customers/domain/value-objects/customer-document.value-object.spec.ts",
+    "destination": "test/unit/modules/customers/domain/value-objects/customer-document.value-object.spec.ts",
+    "source_sha256": "5bede91bdfc6db59804542f5f8657282bf0685e485f7e3690006fde677d540b0",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "test/unit/modules/vehicles/application/use-cases/create-vehicle.use-case.spec.ts",
+    "destination": "test/unit/modules/vehicles/application/use-cases/create-vehicle.use-case.spec.ts",
+    "source_sha256": "e47c9a73505a6c7dcd24dffaec0764206bf0f3e838a4e0e190a9681a0d0bc449",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "test/unit/modules/vehicles/application/use-cases/delete-vehicle.use-case.spec.ts",
+    "destination": "test/unit/modules/vehicles/application/use-cases/delete-vehicle.use-case.spec.ts",
+    "source_sha256": "aac25de4c822ad5e2861248b9cdff528ddb7036f81b6a7a07b85530603d03377",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "test/unit/modules/vehicles/application/use-cases/get-vehicle.use-case.spec.ts",
+    "destination": "test/unit/modules/vehicles/application/use-cases/get-vehicle.use-case.spec.ts",
+    "source_sha256": "471ca84116f4fa416cf27b4fbf6f188a79fea87a3bb3836a736b9d4d70ff39ff",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "test/unit/modules/vehicles/application/use-cases/list-vehicles.use-case.spec.ts",
+    "destination": "test/unit/modules/vehicles/application/use-cases/list-vehicles.use-case.spec.ts",
+    "source_sha256": "6e24b0695e1c0a22d11856892c317a24be8b334f9acc60cd4b38dc1920b13a98",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "test/unit/modules/vehicles/application/use-cases/update-vehicle.use-case.spec.ts",
+    "destination": "test/unit/modules/vehicles/application/use-cases/update-vehicle.use-case.spec.ts",
+    "source_sha256": "71b8ccf0ebe9e0fb4e9574379aa35d2b66ebb376d438be75690b3deb1bb0c17f",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "test/unit/modules/vehicles/domain/entities/vehicle.entity.spec.ts",
+    "destination": "test/unit/modules/vehicles/domain/entities/vehicle.entity.spec.ts",
+    "source_sha256": "704d02007b95e015b02b681cae0fe17f92d283aa2467167ebe23e6d7b93367cf",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  },
+  {
+    "source": "test/unit/modules/vehicles/domain/value-objects/license-plate.value-object.spec.ts",
+    "destination": "test/unit/modules/vehicles/domain/value-objects/license-plate.value-object.spec.ts",
+    "source_sha256": "184f8b352442b1e0ae7d558fcc64aa0fde356ee23e100d34094f073fdd6207db",
+    "changes": "ESM .js import suffixes; explicit jest globals for ESM tests only"
+  }
+]
