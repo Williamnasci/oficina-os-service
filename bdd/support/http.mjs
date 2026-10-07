@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 
 const secret = process.env.JWT_SECRET ?? 'fase4-local-only-jwt-secret-32-characters';
 const token = jwt.sign({ sub: 'operator-test', role: 'operator' }, secret, { expiresIn: '10m' });
-const urls = { os: 'http://localhost:18080', billing: 'http://localhost:18081', execution: 'http://localhost:18082', simulator: 'http://localhost:18083' };
+const urls = { os: process.env.OS_BASE_URL ?? 'http://localhost:18080', billing: process.env.BILLING_BASE_URL ?? 'http://localhost:18081', execution: process.env.EXECUTION_BASE_URL ?? 'http://localhost:18082', simulator: process.env.SIMULATOR_BASE_URL ?? 'http://localhost:18083' };
 export async function request(service, path, body, headers = {}) {
   const response = await fetch(`${urls[service]}${path}`, { method: body === undefined ? 'GET' : 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...headers }, ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(10000) });
   const data = await response.json();
@@ -28,14 +28,17 @@ export async function pay(orderId) {
   return payment;
 }
 export async function openAndApprove(failure = false) {
+  await Promise.all(['os', 'billing', 'execution'].map(service => waitFor(service, '/ready', data => data.status === 'ready')));
   const key = randomUUID();
   const opening = { customer: { name: 'Cliente BDD', documentType: 'CPF', document: '52998224725', email: 'bdd@example.com' }, vehicle: { licensePlate: 'BDD1A23', brand: 'Fiat', model: 'Uno', year: 2020 }, services: [], stockItems: [] };
   const order = await request('os', '/service-orders/opening', opening, { 'Idempotency-Key': key });
   const duplicate = await request('os', '/service-orders/opening', opening, { 'Idempotency-Key': key });
   assert.equal(duplicate.id, order.id);
   await waitFor('execution', `/executions/${order.id}`, data => data.status === 'DIAGNOSING');
-  await request('execution', `/executions/${order.id}/diagnosis`, { diagnosis: failure ? 'TEST:FAIL_QUEUE' : 'Trocar filtro', lines: [{ description: 'Filtro e mão de obra', quantity: 1, unitPriceCents: 15000 }] });
+  await request('billing', '/service-catalog/bdd-filter', { name: 'Filtro e mão de obra', unitPriceCents: 15000 }, { 'Idempotency-Key': 'bdd-catalog-v1' });
+  await request('execution', `/executions/${order.id}/diagnosis`, { diagnosis: failure ? 'TEST:FAIL_QUEUE' : 'Trocar filtro', lines: [{ description: 'Preço informado pelo solicitante', serviceId: 'bdd-filter', quantity: 1, unitPriceCents: 1 }] });
   await waitFor('os', `/service-orders/${order.id}`, data => data.status === 'WAITING_APPROVAL');
+  assert.equal((await request('billing', `/budgets/${order.id}`)).amountCents, 15000);
   await request('billing', `/budgets/${order.id}/decision`, { decision: 'APPROVED' });
   await waitFor('os', `/service-orders/${order.id}`, data => data.status === 'WAITING_PAYMENT' && data.checkout);
   return order.id;
