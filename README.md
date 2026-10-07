@@ -4,6 +4,8 @@
 
 Microsserviço da Fase 4 do Tech Challenge FIAP. Abertura, status, histórico, entrega e coordenação da Saga. Banco exclusivo: **PostgreSQL**.
 
+Clientes e veículos já foram extraídos da aplicação da Fase 3, com suas entidades, DTOs, onze casos de uso e 46 testes originais. Os cadastros usam o banco do OS Service e participam da transação de abertura da OS. [Proveniência, contratos, validação e pendências da refatoração](docs/refactoring-identity.md).
+
 ## Serviços e fronteiras
 
 - [OS Service](https://github.com/Williamnasci/oficina-os-service): cliente/veículo, ciclo da OS e coordenação da Saga.

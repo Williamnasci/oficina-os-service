@@ -5,14 +5,14 @@ import { message, fingerprint, ConflictError, NotFoundError, RetryableError } fr
 import { assertOwner } from './infrastructure/http.mjs';
 
 const openingSchema = z.object({
-  customer: z.object({ name: z.string().trim().min(1).max(200), documentType: z.enum(['CPF', 'CNPJ']), document: z.string().max(30), email: z.email(), phone: z.string().max(30).optional() }).strict(),
-  vehicle: z.object({ licensePlate: z.string().max(20), brand: z.string().min(1), model: z.string().min(1), year: z.number().int().min(1900).max(2100) }).strict(),
+  customer: z.object({ name: z.string().trim().min(1).max(200), documentType: z.enum(['CPF', 'CNPJ']), document: z.string().max(30), email: z.email().nullable().optional(), phone: z.string().max(30).nullable().optional() }).strict(),
+  vehicle: z.object({ licensePlate: z.string().max(20), brand: z.string().min(1), model: z.string().min(1), year: z.number().int().min(1900) }).strict(),
   services: z.array(z.object({ serviceId: z.string().min(1), quantity: z.number().int().positive() })).default([]),
   stockItems: z.array(z.object({ stockItemId: z.string().min(1), quantity: z.number().int().positive() })).default([]),
 }).strict();
 
 export class OsService {
-  constructor(store, { now = () => Date.now(), timeoutMs = 86400000 } = {}) { Object.assign(this, { store, now, timeoutMs }); }
+  constructor(store, { now = () => Date.now(), timeoutMs = 86400000, identity } = {}) { Object.assign(this, { store, now, timeoutMs, identity }); }
   deadline(status) { return ['DIAGNOSING', 'QUOTING', 'WAITING_APPROVAL', 'WAITING_PAYMENT', 'QUEUING'].includes(status) ? this.now() + this.timeoutMs : null; }
   async open(body, principal, key) {
     const input = openingSchema.parse(body);
@@ -23,17 +23,11 @@ export class OsService {
     const orderId = `os-${fingerprint({ owner: principal.sub, key }).slice(0, 32)}`;
     const result = await this.store.transact(orderId, key, fingerprint(input), async (existing, tx) => {
       if (existing) throw new ConflictError('Order already exists');
-      const customerId = `customer-${input.customer.document}`;
-      if (tx) {
-        await tx.query('INSERT INTO customers(id,document,data) VALUES($1,$2,$3) ON CONFLICT(document) DO NOTHING', [customerId, input.customer.document, input.customer]);
-        const vehicle = await tx.query('SELECT customer_id FROM vehicles WHERE plate=$1 FOR UPDATE', [input.vehicle.licensePlate]);
-        if (vehicle.rowCount && vehicle.rows[0].customer_id !== customerId) throw new ConflictError('Vehicle belongs to another customer');
-        const registered = await tx.query('INSERT INTO vehicles(plate,customer_id,data) VALUES($1,$2,$3) ON CONFLICT(plate) DO UPDATE SET plate=EXCLUDED.plate RETURNING customer_id', [input.vehicle.licensePlate, customerId, input.vehicle]);
-        if (registered.rows[0]?.customer_id !== customerId) throw new ConflictError('Vehicle belongs to another customer');
-      }
+      const registered = this.identity ? await this.identity.resolveOpening(input, tx) : { customerId: `customer-${input.customer.document}`, customer: input.customer, vehicle: input.vehicle };
+      if (tx && !this.identity) throw new Error('Identity registry is required for persistent orders');
       const { saga } = openSaga(orderId);
       const seed = { id: `${orderId}:opened`, orderId };
-      const data = { ...saga, ...input, owner: principal.sub, customerId, createdAt: new Date(this.now()).toISOString(), deadline: this.deadline(saga.status) };
+      const data = { ...saga, ...input, ...registered, owner: principal.sub, createdAt: new Date(this.now()).toISOString(), deadline: this.deadline(saga.status) };
       return { data, messages: [message(seed, 'os', 'execution', 'StartDiagnosis', { owner: data.owner, customer: data.customer, vehicle: data.vehicle, services: data.services, stockItems: data.stockItems })] };
     });
     return { id: orderId, status: result.data.status };
