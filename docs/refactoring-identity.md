@@ -8,12 +8,12 @@ Os adapters PostgreSQL substituem os repositórios Prisma e mantêm seus contrat
 
 ## Migração e limites
 
-`migrateIdentity` adapta o esquema do protótipo distribuído, preservando IDs, vínculo e datas existentes, e acrescenta ID único de veículo. Pode ser executada novamente. Não importa automaticamente os dados da Fase 3. Clientes criados no protótipo com ID `customer-<documento>` permanecem com esse ID; um backfill explícito deve resolver esses IDs antes de expor dados do protótipo em operações que exigem UUID. Os novos cadastros usam UUID.
+`migrateIdentity` adapta o esquema do protótipo distribuído, preservando IDs, vínculo e datas existentes, e acrescenta ID único de veículo. Pode ser executada novamente. Não importa automaticamente os dados da Fase 3. A ferramenta [identity-data-migration](identity-data-migration.md) permite importar snapshots com UUIDs preservados, simulação e rejeição de conflitos. Clientes criados no protótipo com ID `customer-<documento>` permanecem com esse ID; um backfill explícito deve resolver esses IDs antes de expor dados do protótipo em operações que exigem UUID. Os novos cadastros usam UUID.
 
 Esta extração não conclui a migração de `service-orders`: catálogo, estoque, cálculos, revisão após recusa, consultas operacionais, estados públicos e autenticação CPF ainda precisam de extração/regressão. A API e os dados originais permanecem preservados.
 
 ## Verificação
 
-`npm run test:cov` executa os 24 testes nativos de domínio/adapters/HTTP/Saga e os 46 testes originais sobre os módulos compilados. A cobertura inclui todos os arquivos de `src`, exceto o bootstrap `main.mjs`, sem excluir os módulos extraídos. Resultado local: 94,88% de linhas; 96,15% de branches; 97,84% de funções. LCOV e resumo JSON são publicados como artefatos do CI.
+`npm run test:cov` executa os 25 testes nativos de domínio/adapters/HTTP/Saga e os 46 testes originais sobre os módulos compilados. A cobertura inclui todos os arquivos de `src`, exceto o bootstrap `main.mjs`, sem excluir os módulos extraídos. Resultado local com TEST_DATABASE_URL e integrações dentro da cobertura: 95,12% de linhas; 97,28% de branches; 97,91% de funções. LCOV e resumo JSON são publicados como artefatos do CI.
 
 `TEST_DATABASE_URL=... npm run test:integration` usa banco de teste separado: abertura concorrente reutiliza o mesmo cliente/veículo; tentativas com proprietário incorreto ou cadastro inativo não gravam OS, inbox ou outbox; cadastro criado antes da rejeição também sofre rollback. A integração verifica persistência, deduplicação e restart. O CI mantém BDD distribuído e deploy em Kubernetes Kind.
