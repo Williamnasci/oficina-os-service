@@ -7,6 +7,7 @@ import { IdentityRegistry } from '../../dist/identity.mjs';
 import { migrateIdentity } from '../../dist/identity-schema.mjs';
 import { OsService } from '../../dist/service.mjs';
 import { fingerprint } from '../../dist/infrastructure/contracts.mjs';
+import { importIdentitySnapshot } from '../../dist/identity-import.mjs';
 
 function cpf() {
   let digits = String(Math.floor(Math.random() * 900000000) + 100000000);
@@ -52,5 +53,28 @@ test('real PostgreSQL: identities and OS share atomic transaction, concurrent op
     v.deactivate(); await vehicles.update(v);
     await assert.rejects(service.open(input, principal, 'inactive-vehicle'), /inactive vehicle/); assert.deepEqual(await totals(), before);
     v.isActive = true; await vehicles.update(v);
+  } finally { await store.close(); }
+});
+
+test('real PostgreSQL: legacy import defaults to rollback, preserves UUIDs and rejects conflicts atomically', { skip: !process.env.TEST_DATABASE_URL }, async () => {
+  const store = new PostgresStore(process.env.TEST_DATABASE_URL); await store.init();
+  try {
+    await migrateIdentity(store.pool);
+    const customers = new CustomerSqlRepository(store.pool), vehicles = new VehicleSqlRepository(store.pool);
+    const id = randomUUID(), vehicleId = randomUUID();
+    const plate = [...randomUUID().replace(/-/g, '').slice(0, 3)].map(c => String.fromCharCode(65 + parseInt(c, 16))).join('') + String(Math.floor(Math.random() * 9000) + 1000);
+    const c = { id, name: 'Imported original', documentType: 'CPF', document: cpf(), phone: null, email: null, isActive: false, createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-02-01T00:00:00.000Z' };
+    const v = { id: vehicleId, customerId: id, licensePlate: plate, brand: 'Fiat', model: 'Uno', year: 2020, isActive: false, createdAt: c.createdAt, updatedAt: c.updatedAt };
+    const snapshot = { version: 1, customers: [c], vehicles: [v] };
+    assert.deepEqual(await importIdentitySnapshot(store.pool, snapshot), { commit: false, customersCreated: 1, vehiclesCreated: 1, customersUnchanged: 0, vehiclesUnchanged: 0 });
+    assert.equal(await customers.findById(id), null); assert.equal(await vehicles.findById(vehicleId), null);
+    await importIdentitySnapshot(store.pool, snapshot, { commit: true });
+    assert.equal((await customers.findById(id)).isActive, false); assert.equal((await vehicles.findById(vehicleId)).customerId, id);
+    assert.equal((await vehicles.findById(vehicleId)).createdAt.toISOString(), c.createdAt);
+    assert.deepEqual(await importIdentitySnapshot(store.pool, snapshot, { commit: true }), { commit: true, customersCreated: 0, vehiclesCreated: 0, customersUnchanged: 1, vehiclesUnchanged: 1 });
+    const fresh = { ...c, id: randomUUID(), document: cpf() };
+    await assert.rejects(importIdentitySnapshot(store.pool, { ...snapshot, customers: [c, fresh], vehicles: [{ ...v, brand: 'Conflicting change' }] }, { commit: true }), /Vehicle conflicts/);
+    assert.equal(await customers.findById(fresh.id), null); assert.equal((await vehicles.findById(vehicleId)).brand, 'Fiat');
+    await assert.rejects(importIdentitySnapshot(store.pool, { ...snapshot, customers: [{ ...c, id: randomUUID() }], vehicles: [] }, { commit: true }), /Customer conflicts/);
   } finally { await store.close(); }
 });
