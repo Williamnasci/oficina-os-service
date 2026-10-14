@@ -13,13 +13,13 @@ export class CustomerSqlRepository {
   restore(data) { return new Customer({ ...dates(data), document: CustomerDocument.restore(data.document, data.documentType) }); }
   async create(customer, tx = this.pool) {
     try { await tx.query('INSERT INTO customers(id,document,data) VALUES($1,$2,$3)', [customer.id, customer.document.value, customerData(customer)]); }
-    catch (error) { if (error.code === '23505') throw new ConflictException('Document already registered.'); throw error; }
+    catch (error) { if (error.code === '23505') throw new ConflictException(error.constraint === 'customers_pkey' ? 'Customer ID already registered.' : 'Document already registered.'); throw error; }
   }
   async findById(id, tx = this.pool) { const result = await tx.query('SELECT data FROM customers WHERE id=$1', [id]); return result.rows[0] ? this.restore(result.rows[0].data) : null; }
   async findByDocument(document, tx = this.pool, lock = false) { const result = await tx.query(`SELECT data FROM customers WHERE document=$1${lock ? ' FOR UPDATE' : ''}`, [document.replace(/\D/g, '')]); return result.rows[0] ? this.restore(result.rows[0].data) : null; }
   async findAll() { return (await this.pool.query("SELECT data FROM customers ORDER BY data->>'createdAt' DESC,id")).rows.map(row => this.restore(row.data)); }
-  async update(customer) {
-    const result = await this.pool.query('UPDATE customers SET data=$2 WHERE id=$1', [customer.id, customerData(customer)]);
+  async update(customer, tx = this.pool) {
+    const result = await tx.query('UPDATE customers SET data=$2 WHERE id=$1', [customer.id, customerData(customer)]);
     if (!result.rowCount) throw new NotFoundException('Customer not found.');
   }
 }
@@ -30,7 +30,7 @@ export class VehicleSqlRepository {
   async create(vehicle, tx = this.pool) {
     try { await tx.query('INSERT INTO vehicles(id,plate,customer_id,data) VALUES($1,$2,$3,$4)', [vehicle.id, vehicle.licensePlate.value, vehicle.customerId, vehicleData(vehicle)]); }
     catch (error) {
-      if (error.code === '23505') throw new ConflictException('License plate already registered.');
+      if (error.code === '23505') throw new ConflictException(error.constraint === 'vehicles_identity_id' ? 'Vehicle ID already registered.' : 'License plate already registered.');
       if (error.code === '23503') throw new NotFoundException('Customer not found.');
       throw error;
     }
@@ -39,5 +39,5 @@ export class VehicleSqlRepository {
   async findByLicensePlate(plate, tx = this.pool, lock = false) { const result = await tx.query(`SELECT data FROM vehicles WHERE plate=$1${lock ? ' FOR UPDATE' : ''}`, [plate.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()]); return result.rows[0] ? this.restore(result.rows[0].data) : null; }
   async findAll() { return (await this.pool.query("SELECT data FROM vehicles ORDER BY data->>'createdAt' DESC,id")).rows.map(row => this.restore(row.data)); }
   async findByCustomerId(id) { return (await this.pool.query("SELECT data FROM vehicles WHERE customer_id=$1 ORDER BY data->>'createdAt' DESC,id", [id])).rows.map(row => this.restore(row.data)); }
-  async update(vehicle) { const result = await this.pool.query('UPDATE vehicles SET data=$2 WHERE id=$1', [vehicle.id, vehicleData(vehicle)]); if (!result.rowCount) throw new NotFoundException('Vehicle not found.'); }
+  async update(vehicle, tx = this.pool) { const result = await tx.query('UPDATE vehicles SET data=$2 WHERE id=$1', [vehicle.id, vehicleData(vehicle)]); if (!result.rowCount) throw new NotFoundException('Vehicle not found.'); }
 }

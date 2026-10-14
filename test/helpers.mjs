@@ -14,6 +14,7 @@ export class MemoryStore {
   }
   async get(id) { return structuredClone(this.records.get(id) ?? null); }
   async list() { return [...this.records].map(([id, data]) => ({ id, data })); }
+  async listExpired(now) { return (await this.list()).filter(({ data }) => data.deadline != null && data.deadline <= now); }
   async pending() { return this.outbox.map(envelope => ({ id: envelope.id, envelope })); }
   async markSent(id) { this.outbox = this.outbox.filter(envelope => envelope.id !== id); }
   async ping() {}

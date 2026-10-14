@@ -43,6 +43,14 @@ export async function openAndApprove(failure = false) {
   await waitFor('os', `/service-orders/${order.id}`, data => data.status === 'WAITING_PAYMENT' && data.checkout);
   return order.id;
 }
+export async function openZeroQuote() {
+  const admin = jwt.sign({ sub: 'admin-test', role: 'admin' }, secret, { expiresIn: '10m' });
+  const { id: serviceId } = await request('billing', '/service-catalog', { name: 'Warranty BDD', price: 0 }, { Authorization: `Bearer ${admin}` });
+  const { id } = await request('os', '/service-orders/opening', { customer: { name: 'Cliente BDD', documentType: 'CPF', document: '52998224725', email: 'bdd@example.com' }, vehicle: { licensePlate: 'BDD1A23', brand: 'Fiat', model: 'Uno', year: 2020 }, services: [{ serviceId, quantity: 1 }] }, { 'Idempotency-Key': randomUUID() });
+  await waitFor('execution', `/executions/${id}`, data => data.status === 'DIAGNOSING');
+  await request('execution', `/executions/${id}/diagnosis`, { diagnosis: 'Warranty', lines: [{ serviceId, description: 'Warranty', quantity: 1 }] });
+  return id;
+}
 export async function happyFlow() {
   const id = await openAndApprove();
   const payment = await pay(id);
