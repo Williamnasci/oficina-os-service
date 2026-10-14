@@ -35,7 +35,8 @@ test('real PostgreSQL: identities and OS share atomic transaction, concurrent op
     assert.equal((await service.open(input, principal, 'opening-first')).id, opened[0].id);
     const c = await customers.findById(a.customerId), v = await vehicles.findById(a.vehicleId);
     assert.equal((await vehicles.findByCustomerId(c.id)).length, 1);
-    await assert.rejects(customers.create(c), /Document already/);
+    await assert.rejects(customers.create(c), /Customer ID already/);
+    await assert.rejects(customers.create(customers.restore({ ...c, id: randomUUID(), document: c.document.value, documentType: c.document.type })), /Document already/);
     await assert.rejects(vehicles.create(v), /License plate already/);
     const snapshot = JSON.stringify(c);
     await migrateIdentity(store.pool); assert.equal(JSON.stringify(await customers.findById(c.id)), snapshot);
@@ -76,5 +77,22 @@ test('real PostgreSQL: legacy import defaults to rollback, preserves UUIDs and r
     await assert.rejects(importIdentitySnapshot(store.pool, { ...snapshot, customers: [c, fresh], vehicles: [{ ...v, brand: 'Conflicting change' }] }, { commit: true }), /Vehicle conflicts/);
     assert.equal(await customers.findById(fresh.id), null); assert.equal((await vehicles.findById(vehicleId)).brand, 'Fiat');
     await assert.rejects(importIdentitySnapshot(store.pool, { ...snapshot, customers: [{ ...c, id: randomUUID() }], vehicles: [] }, { commit: true }), /Customer conflicts/);
+    const differentDocument = cpf();
+    await assert.rejects(importIdentitySnapshot(store.pool, { ...snapshot, customers: [{ ...c, document: differentDocument }], vehicles: [] }, { commit: true }), /Customer conflicts/);
+    assert.equal(await customers.findByDocument(differentDocument), null);
+    const client = await store.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const originalCustomer = await customers.findById(id, client), originalVehicle = await vehicles.findById(vehicleId, client);
+      originalCustomer.name = 'Rolled-back update'; originalVehicle.brand = 'Rolled-back update';
+      await customers.update(originalCustomer, client); await vehicles.update(originalVehicle, client);
+      assert.equal((await customers.findById(id, client)).name, 'Rolled-back update');
+      await client.query('ROLLBACK');
+      assert.equal((await customers.findById(id)).name, c.name); assert.equal((await vehicles.findById(vehicleId)).brand, v.brand);
+    } finally { client.release(); }
+    const existingVehicle = await vehicles.findById(vehicleId);
+    const collidingVehicle = vehicles.restore({ ...v, licensePlate: plate.slice(0, 3) + (plate.slice(3) === '9999' ? '1000' : '9999') });
+    await assert.rejects(vehicles.create(collidingVehicle), /Vehicle ID already/);
+    assert.equal((await vehicles.findById(existingVehicle.id)).licensePlate.value, plate);
   } finally { await store.close(); }
 });

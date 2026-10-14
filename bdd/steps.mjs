@@ -1,6 +1,6 @@
 import { Given, When, Then, setDefaultTimeout } from '@cucumber/cucumber';
 import assert from 'node:assert/strict';
-import { openAndApprove, pay, request, waitFor } from './support/http.mjs';
+import { openAndApprove, openZeroQuote, pay, request, waitFor } from './support/http.mjs';
 setDefaultTimeout(60000);
 
 Given('uma OS diagnosticada e com orçamento aprovado', async function () { this.id = await openAndApprove(); });
@@ -25,4 +25,12 @@ Then('a execução está cancelada e o pagamento está reembolsado', async funct
   assert.equal((await request('execution', `/executions/${this.id}`)).status, 'CANCELLED');
   assert.equal((await request('billing', `/budgets/${this.id}`)).status, 'REFUNDED');
   assert.equal((await request('simulator', `/v1/payments/${this.payment.id}`)).status, 'refunded');
+});
+Given('uma OS diagnosticada apenas com serviço de valor zero', async function () { this.id = await openZeroQuote(); });
+When('a Saga trata a rejeição do orçamento de total zero', async function () { await waitFor('os', `/service-orders/${this.id}`, data => data.status === 'COMPENSATED'); });
+Then('a execução é cancelada sem checkout ou pagamento', async function () {
+  const order = await request('os', `/service-orders/${this.id}`), budget = await request('billing', `/budgets/${this.id}`);
+  assert.equal((await request('execution', `/executions/${this.id}`)).status, 'CANCELLED');
+  assert.equal(budget.status, 'CANCELLED'); assert.equal(budget.checkout, undefined); assert.equal(budget.paymentId, undefined);
+  assert.equal(order.checkout, undefined); assert.equal(order.paymentId, undefined); assert.equal(order.quote, undefined);
 });

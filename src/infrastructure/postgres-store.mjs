@@ -39,6 +39,9 @@ export class PostgresStore {
   }
   async get(id) { return (await this.pool.query('SELECT data FROM aggregates WHERE id=$1', [id])).rows[0]?.data ?? null; }
   async list() { return (await this.pool.query('SELECT id,data FROM aggregates ORDER BY updated_at DESC LIMIT 500')).rows; }
+  async listExpired(now) {
+    return (await this.pool.query("SELECT id,data FROM aggregates WHERE data->>'deadline' IS NOT NULL AND (data->>'deadline')::bigint <= $1 ORDER BY (data->>'deadline')::bigint,id", [now])).rows;
+  }
   async pending() { return (await this.pool.query('SELECT id,envelope FROM outbox WHERE sent_at IS NULL ORDER BY created_at,id LIMIT 100')).rows; }
   async markSent(id) { await this.pool.query('UPDATE outbox SET sent_at=now() WHERE id=$1', [id]); }
   async ping() { await this.pool.query('SELECT 1'); }

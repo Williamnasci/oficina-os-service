@@ -69,8 +69,8 @@ export class OsService {
     });
   }
   async expire() {
-    for (const { id, data } of await this.store.list()) {
-      if (data.deadline && data.deadline <= this.now()) {
+    for (const { id, data } of await this.store.listExpired(this.now())) {
+      if (data.deadline !== null && data.deadline <= this.now()) {
         await this.consume(message({ id: `${id}:deadline:${data.version}`, orderId: id }, 'os', 'os', 'DeadlineExpired', { stage: data.status }));
       }
     }

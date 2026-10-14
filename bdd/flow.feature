@@ -10,3 +10,8 @@ Feature: Ciclo distribuído de uma ordem de serviço
     And o provedor confirma o pagamento da OS
     When a Saga compensa a falha na fila
     Then a execução está cancelada e o pagamento está reembolsado
+
+  Scenario: Compensação de orçamento com total zero na política atual
+    Given uma OS diagnosticada apenas com serviço de valor zero
+    When a Saga trata a rejeição do orçamento de total zero
+    Then a execução é cancelada sem checkout ou pagamento
