@@ -52,3 +52,30 @@ test('OS routes enforce reads, opening and operational delivery', async () => {
   assert.equal((await routes[2].handle(req, principal)).history.length, 0);
   await assert.rejects(routes[3].handle(req, principal));
 });
+
+test('refusal compensates the old attempt before revision, fences stale events and routes revised payment', async () => {
+  const store = new MemoryStore(), service = new OsService(store);
+  const { id } = await service.open(opening, principal, 'revision-1');
+  const send = (source, type, payload = {}, attempt = id) => service.consume(message({ id: attempt + ':' + type, orderId: attempt, correlationId: id }, source, 'os', type, payload));
+  await send('execution', 'DiagnosisCompleted', { diagnosis: 'Old', lines: [{ description: 'Service', quantity: 1, unitPriceCents: 100 }] });
+  await send('billing', 'QuoteCreated', { amountCents: 100 });
+  await send('billing', 'QuoteRejected');
+  assert.equal((await store.get(id)).status, 'CANCELLING_EXECUTION');
+  await send('execution', 'ExecutionCancelled');
+  assert.equal((await store.get(id)).status, 'COMPENSATING_BILLING');
+  await send('billing', 'BillingCompensated');
+  const revised = await store.get(id);
+  assert.equal(revised.status, 'DIAGNOSING'); assert.equal(revised.orderId, id); assert.equal(revised.quoteRevision, 1);
+  assert.equal(revised.previousQuotes[0].quote.amountCents, 100); assert.equal(revised.quote, undefined);
+  assert.equal(store.outbox.at(-1).orderId, revised.attemptId);
+  await send('billing', 'CheckoutCreated', { url: 'stale' });
+  assert.equal((await store.get(id)).checkout, undefined);
+  await send('billing', 'PaymentApproved', { paymentId: 'old' });
+  assert.equal(store.outbox.at(-1).type, 'RefundLatePayment'); assert.equal(store.outbox.at(-1).orderId, id);
+  await send('execution', 'DiagnosisCompleted', { diagnosis: 'Revised', lines: [{ description: 'Service', quantity: 1, unitPriceCents: 200 }] }, revised.attemptId);
+  await send('billing', 'QuoteCreated', { amountCents: 200 }, revised.attemptId);
+  await send('billing', 'QuoteApproved', {}, revised.attemptId);
+  await send('billing', 'PaymentApproved', { paymentId: 'verified' }, revised.attemptId);
+  assert.equal(store.outbox.at(-1).type, 'QueueExecution'); assert.equal(store.outbox.at(-1).orderId, revised.attemptId);
+  assert.equal((await store.get(id)).paymentId, 'verified');
+});

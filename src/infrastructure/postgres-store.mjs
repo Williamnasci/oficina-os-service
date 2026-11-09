@@ -42,6 +42,20 @@ export class PostgresStore {
   async listExpired(now) {
     return (await this.pool.query("SELECT id,data FROM aggregates WHERE data->>'deadline' IS NOT NULL AND (data->>'deadline')::bigint <= $1 ORDER BY (data->>'deadline')::bigint,id", [now])).rows;
   }
+  async listOrders(customerId = null) {
+    return (await this.pool.query("SELECT id,data FROM aggregates WHERE data ? 'orderId' AND ($1::text IS NULL OR data->>'customerId' = $1) ORDER BY data->>'createdAt' DESC,id", [customerId])).rows;
+  }
+  async operationalOrders() {
+    return (await this.pool.query(`SELECT id,data FROM aggregates WHERE data ? 'orderId' AND NOT COALESCE((data->>'readOnly')::boolean,false)
+      AND data->>'status' IN ('IN_PROGRESS','QUEUING','WAITING_PAYMENT','WAITING_APPROVAL','QUOTING','DIAGNOSING')
+      ORDER BY CASE data->>'status' WHEN 'IN_PROGRESS' THEN 0 WHEN 'QUEUING' THEN 1 WHEN 'WAITING_PAYMENT' THEN 1 WHEN 'WAITING_APPROVAL' THEN 2 ELSE 3 END,
+      data->>'createdAt',id`)).rows;
+  }
+  async averageExecutionMinutes() {
+    const result = await this.pool.query(`SELECT COALESCE(round(avg(greatest(0,round(extract(epoch FROM ((data->>'finishedAt')::timestamptz - (data->>'startedAt')::timestamptz))/60)))),0)::integer AS minutes
+      FROM aggregates WHERE data->>'startedAt' IS NOT NULL AND data->>'finishedAt' IS NOT NULL`);
+    return result.rows[0].minutes;
+  }
   async pending() { return (await this.pool.query('SELECT id,envelope FROM outbox WHERE sent_at IS NULL ORDER BY created_at,id LIMIT 100')).rows; }
   async markSent(id) { await this.pool.query('UPDATE outbox SET sent_at=now() WHERE id=$1', [id]); }
   async ping() { await this.pool.query('SELECT 1'); }

@@ -127,8 +127,19 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "legacy"
+              ]
+            }
           }
-        ]
+        ],
+        "description": "Use view=legacy para o estado público original. attemptId indica o orçamento e execução ativos após uma recusa."
       }
     },
     "/service-orders/{id}/deliver": {
@@ -621,6 +632,77 @@
           {
             "in": "path",
             "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/service-orders": {
+      "get": {
+        "summary": "Listar OS ou consultar por CPF/CNPJ (admin)",
+        "responses": {
+          "200": {
+            "description": "Consulta concluída"
+          },
+          "403": {
+            "description": "Requer admin"
+          }
+        },
+        "parameters": [
+          {
+            "name": "document",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/service-orders/operational-queue": {
+      "get": {
+        "summary": "Fila operacional por prioridade e antiguidade (admin)",
+        "responses": {
+          "200": {
+            "description": "Consulta concluída"
+          },
+          "403": {
+            "description": "Requer admin"
+          }
+        }
+      }
+    },
+    "/service-orders/metrics/average-execution-time": {
+      "get": {
+        "summary": "Tempo médio do início à conclusão (admin)",
+        "responses": {
+          "200": {
+            "description": "Consulta concluída"
+          },
+          "403": {
+            "description": "Requer admin"
+          }
+        }
+      }
+    },
+    "/service-orders/{id}/legacy-details": {
+      "get": {
+        "summary": "Detalhes e preços congelados da OS (admin)",
+        "responses": {
+          "200": {
+            "description": "Consulta concluída"
+          },
+          "403": {
+            "description": "Requer admin"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
             "required": true,
             "schema": {
               "type": "string"

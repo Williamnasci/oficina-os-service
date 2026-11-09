@@ -3,6 +3,7 @@ import { openSaga, advance } from './saga.ts';
 import { normalizeDocument, normalizePlate } from './customer.ts';
 import { message, fingerprint, ConflictError, NotFoundError, RetryableError } from './infrastructure/contracts.mjs';
 import { assertOwner } from './infrastructure/http.mjs';
+import { publicOrderStatus } from './order-queries.mjs';
 
 const openingSchema = z.object({
   customer: z.object({ name: z.string().trim().min(1).max(200), documentType: z.enum(['CPF', 'CNPJ']), document: z.string().max(30), email: z.email().nullable().optional(), phone: z.string().max(30).nullable().optional() }).strict(),
@@ -38,16 +39,41 @@ export class OsService {
       ? ['QuoteCreated', 'QuoteApproved', 'QuoteRejected', 'CheckoutCreated', 'PaymentApproved', 'BillingCompensated', 'StepFailed', 'CompensationFailed']
       : event.source === 'execution' ? ['DiagnosisCompleted', 'ExecutionStarted', 'ExecutionFinished', 'ExecutionCancelled', 'StepFailed', 'CompensationFailed'] : ['DeadlineExpired'];
     if (!allowed.includes(event.type)) throw new Error('Invalid event producer or type');
-    return this.store.transact(event.orderId, event.id, fingerprint({ source: event.source, type: event.type, payload: event.payload }), async data => {
+    const rootId = event.orderId.replace(/^(os-[0-9a-f]{32})-rev-[1-9]\d*$/, '$1');
+    return this.store.transact(rootId, event.id, fingerprint({ ...(rootId !== event.orderId ? { attempt: event.orderId } : {}), source: event.source, type: event.type, payload: event.payload }), async data => {
       if (!data) throw new RetryableError('Order not found yet');
+      if (data.readOnly) throw new ConflictError('Imported historical order is read-only');
+      if ((data.attemptId ?? rootId) !== event.orderId) {
+        if (event.type === 'PaymentApproved') return { data, messages: [message(event, 'os', 'billing', 'RefundLatePayment', event.payload)] };
+        return { data };
+      }
       if (event.type === 'CheckoutCreated') return { data: { ...data, checkout: event.payload } };
       if (event.type === 'PaymentApproved' && ['CANCELLING_EXECUTION', 'COMPENSATING_BILLING', 'COMPENSATED'].includes(data.status)) {
         return { data, messages: [message(event, 'os', 'billing', 'RefundLatePayment', event.payload)] };
       }
-      const result = advance(data, event, data.version);
+      const result = advance(data, { ...event, orderId: rootId }, data.version);
       const next = { ...data, ...result.saga, deadline: this.deadline(result.saga.status) };
+      next.updatedAt = event.occurredAt;
+      if (event.type === 'ExecutionStarted') next.startedAt = event.occurredAt;
+      if (event.type === 'ExecutionFinished') next.finishedAt = event.occurredAt;
       if (event.type === 'DiagnosisCompleted') next.diagnosis = event.payload;
       if (event.type === 'QuoteCreated') next.quote = event.payload;
+      if (event.type === 'QuoteRejected') next.revisionRequested = true;
+      if (event.type === 'BillingCompensated' && data.revisionRequested && /^os-[0-9a-f]{32}$/.test(rootId)) {
+        const quoteRevision = (data.quoteRevision ?? 0) + 1;
+        const attemptId = `${rootId}-rev-${quoteRevision}`;
+        const revision = { ...next, attemptId, quoteRevision, revisionRequested: false, status: 'DIAGNOSING', deadline: this.deadline('DIAGNOSING'),
+          version: next.version + 1, history: [...next.history, { eventId: `${event.id}:revision`, from: 'COMPENSATED', to: 'DIAGNOSING' }],
+          previousQuotes: [...(data.previousQuotes ?? []), { attemptId: event.orderId, quote: data.quote ?? null, decision: 'REJECTED' }] };
+        for (const key of ['quote', 'checkout', 'paymentId', 'diagnosis', 'failure']) delete revision[key];
+        const lines = data.diagnosis?.lines;
+        if (lines) {
+          revision.stockItems = lines.filter(line => line.stockItemId).map(({ stockItemId, quantity }) => ({ stockItemId, quantity }));
+          revision.services = lines.filter(line => line.serviceId).map(({ serviceId, quantity }) => ({ serviceId, quantity }));
+        }
+        return { data: revision, messages: [message({ ...event, orderId: attemptId, correlationId: rootId }, 'os', 'execution', 'StartDiagnosis',
+          { owner: revision.owner, customer: revision.customer, vehicle: revision.vehicle, services: revision.services, stockItems: revision.stockItems })] };
+      }
       if (event.type === 'PaymentApproved') next.paymentId = event.payload.paymentId;
       if (event.type === 'StepFailed' || event.type === 'CompensationFailed') next.failure = event.payload;
       const messages = result.commands.map(command => message(event, 'os', command.target, command.type, {
@@ -64,14 +90,16 @@ export class OsService {
   async consumeLocal(id, type, key) {
     return this.store.transact(id, key, type, async data => {
       if (!data) throw new NotFoundError('Order not found');
+      if (data.readOnly) throw new ConflictError('Imported historical order is read-only');
       const result = advance(data, { id: key, orderId: id, type }, data.version);
-      return { data: { ...data, ...result.saga, deadline: null } };
+      const deliveredAt = new Date(this.now()).toISOString();
+      return { data: { ...data, ...result.saga, deadline: null, deliveredAt, updatedAt: deliveredAt } };
     });
   }
   async expire() {
     for (const { id, data } of await this.store.listExpired(this.now())) {
       if (data.deadline !== null && data.deadline <= this.now()) {
-        await this.consume(message({ id: `${id}:deadline:${data.version}`, orderId: id }, 'os', 'os', 'DeadlineExpired', { stage: data.status }));
+        await this.consume(message({ id: `${id}:deadline:${data.version}`, orderId: data.attemptId ?? id, correlationId: id }, 'os', 'os', 'DeadlineExpired', { stage: data.status }));
       }
     }
   }
@@ -81,7 +109,7 @@ export function osRoutes(service) {
   return [
     { method: 'post', path: '/service-orders/opening', status: 201, handle: (req, principal) => service.open(req.body, principal, req.headers['idempotency-key']) },
     { method: 'get', path: '/service-orders/:id', handle: (req, principal) => service.get(req.params.id, principal) },
-    { method: 'get', path: '/service-orders/:id/status', handle: async (req, principal) => { const data = await service.get(req.params.id, principal); return { id: req.params.id, status: data.status, history: data.history }; } },
+    { method: 'get', path: '/service-orders/:id/status', handle: async (req, principal) => { const data = await service.get(req.params.id, principal); return { id: req.params.id, status: req.query?.view === 'legacy' ? publicOrderStatus(data) : data.status, publicStatus: publicOrderStatus(data), attemptId: data.attemptId ?? req.params.id, quoteRevision: data.quoteRevision ?? 0, history: data.history }; } },
     { method: 'post', path: '/service-orders/:id/deliver', roles: ['admin', 'operator'], handle: async (req, principal) => (await service.deliver(req.params.id, principal, `${req.params.id}:delivered`)).data },
   ];
 }

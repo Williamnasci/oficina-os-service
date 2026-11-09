@@ -72,3 +72,5 @@ npm run test:bdd
 ```
 
 As portas 18080-18083 devem estar livres. Se o ambiente local da Fase 4 já estiver ativo nessas portas, execute apenas o BDD contra ele.
+
+[Atualizações da Fase 4: estoque, orçamento e compatibilidade](docs/phase4-nov09.md).
