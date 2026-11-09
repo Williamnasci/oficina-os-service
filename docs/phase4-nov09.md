@@ -12,4 +12,4 @@ Para exercitar a integração com o estoque, execute `npm run test:bdd:stock` co
 
 ## Paginação administrativa
 
-GET /service-orders mantém a resposta em array, com 50 registros por padrão. Use limit de 1 a 100 e offset a partir de zero. O filtro document pode ser combinado com ambos. A ordenação usa createdAt decrescente e id crescente como desempate. Para bases grandes já existentes, provisione os índices parciais de listagem com CREATE INDEX CONCURRENTLY antes de iniciar o rollout.
+GET /service-orders mantém a resposta em array, com 50 registros por padrão. Use limit de 1 a 100 e offset a partir de zero. O filtro document pode ser combinado com ambos. A ordenação usa createdAt decrescente e id crescente como desempate. Ordens legadas sem data vêm ao final. Para bases grandes já existentes, provisione os índices parciais de listagem com CREATE INDEX CONCURRENTLY antes de iniciar o rollout.

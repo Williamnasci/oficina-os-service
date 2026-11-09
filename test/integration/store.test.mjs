@@ -34,10 +34,13 @@ test('real database: pages orders deterministically and applies the customer fil
       } }));
     }
     await store.transact(group, 'open', 'open', async () => ({ data: { customerId: customer } }));
+    const undated = 'undated-' + group;
+    await store.transact(undated, 'open', 'open', async () => ({ data: { orderId: undated, customerId: customer } }));
     assert.deepEqual((await store.listOrders(null, 2, 0)).map(row => row.id), orders.slice(0, 2));
     assert.deepEqual((await store.listOrders(customer, 1, 0)).map(row => row.id), [orders[0]]);
     assert.deepEqual((await store.listOrders(customer, 1, 1)).map(row => row.id), [orders[2]]);
-    assert.deepEqual(await store.listOrders(customer, 1, 2), []);
+    assert.deepEqual((await store.listOrders(customer, 1, 2)).map(row => row.id), [undated]);
+    assert.deepEqual(await store.listOrders(customer, 1, 3), []);
   } finally {
     await store.close();
   }

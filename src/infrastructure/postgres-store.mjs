@@ -10,8 +10,8 @@ export class PostgresStore {
       CREATE TABLE IF NOT EXISTS inbox (aggregate_id text NOT NULL, message_id text NOT NULL, fingerprint text NOT NULL, PRIMARY KEY(aggregate_id,message_id));
       CREATE TABLE IF NOT EXISTS outbox (id text PRIMARY KEY, aggregate_id text NOT NULL, envelope jsonb NOT NULL, sent_at timestamptz, created_at timestamptz NOT NULL DEFAULT now());
       CREATE INDEX IF NOT EXISTS outbox_pending ON outbox(created_at) WHERE sent_at IS NULL;
-      CREATE INDEX IF NOT EXISTS aggregates_orders_created ON aggregates ((data->>'createdAt') DESC,id) WHERE data ? 'orderId';
-      CREATE INDEX IF NOT EXISTS aggregates_customer_orders_created ON aggregates ((data->>'customerId'),(data->>'createdAt') DESC,id) WHERE data ? 'orderId';`);
+      CREATE INDEX IF NOT EXISTS aggregates_orders_created ON aggregates ((data->>'createdAt') DESC NULLS LAST,id) WHERE data ? 'orderId';
+      CREATE INDEX IF NOT EXISTS aggregates_customer_orders_created ON aggregates ((data->>'customerId'),(data->>'createdAt') DESC NULLS LAST,id) WHERE data ? 'orderId';`);
   }
   async transact(id, messageId, hash, decide) {
     const client = await this.pool.connect();
@@ -47,7 +47,7 @@ export class PostgresStore {
   }
   async listOrders(customerId = null, limit = 50, offset = 0) {
     const orders = "SELECT id,data FROM aggregates WHERE data ? 'orderId'";
-    const page = "ORDER BY data->>'createdAt' DESC,id LIMIT $1 OFFSET $2";
+    const page = "ORDER BY data->>'createdAt' DESC NULLS LAST,id LIMIT $1 OFFSET $2";
     if (customerId === null) return (await this.pool.query(orders + ' ' + page, [limit, offset])).rows;
     return (await this.pool.query(orders + " AND data->>'customerId' = $3 " + page, [limit, offset, customerId])).rows;
   }
