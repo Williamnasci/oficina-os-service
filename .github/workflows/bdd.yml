@@ -11,6 +11,9 @@ jobs:
   distributed-bdd:
     name: Distributed BDD
     runs-on: ubuntu-latest
+    env:
+      # MongoDB 8 exits at startup on the runner kernel (SERVER-121912).
+      BDD_MONGO_IMAGE: mongo:7.0
     steps:
       - uses: actions/checkout@v4
         with: { path: oficina-os-service }
