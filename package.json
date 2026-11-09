@@ -18,7 +18,8 @@
     "pretest": "npm run build",
     "pretest:cov": "npm run build",
     "pretest:legacy": "npm run build",
-    "pretest:integration": "npm run build"
+    "pretest:integration": "npm run build",
+    "test:bdd:stock": "cucumber-js bdd/flow.feature bdd/stock.feature --import bdd/steps.mjs --format progress --format json:bdd/results.json"
   },
   "devDependencies": {
     "@cucumber/cucumber": "13.3.0",

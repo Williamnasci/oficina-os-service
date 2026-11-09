@@ -20,3 +20,28 @@ test('real database: concurrent updates, inbox deduplication, outbox commit and 
     await store.markSent(`${id}:out`); assert.ok(!(await store.pending()).some(item => item.id === `${id}:out`));
   } finally { await store.close(); }
 });
+
+test('real database: pages orders deterministically and applies the customer filter before pagination', { skip: !process.env.TEST_DATABASE_URL }, async () => {
+  const store = new PostgresStore(process.env.TEST_DATABASE_URL);
+  const group = randomUUID();
+  const customer = 'customer-' + group;
+  const orders = [0, 1, 2].map(index => 'order-' + group + '-' + index);
+  try {
+    await store.init();
+    for (const [index, id] of orders.entries()) {
+      await store.transact(id, 'open', 'open', async () => ({ data: {
+        orderId: id, customerId: index === 1 ? 'another-' + group : customer, createdAt: '9999-01-01T00:00:00.000Z',
+      } }));
+    }
+    await store.transact(group, 'open', 'open', async () => ({ data: { customerId: customer } }));
+    const undated = 'undated-' + group;
+    await store.transact(undated, 'open', 'open', async () => ({ data: { orderId: undated, customerId: customer } }));
+    assert.deepEqual((await store.listOrders(null, 2, 0)).map(row => row.id), orders.slice(0, 2));
+    assert.deepEqual((await store.listOrders(customer, 1, 0)).map(row => row.id), [orders[0]]);
+    assert.deepEqual((await store.listOrders(customer, 1, 1)).map(row => row.id), [orders[2]]);
+    assert.deepEqual((await store.listOrders(customer, 1, 2)).map(row => row.id), [undated]);
+    assert.deepEqual(await store.listOrders(customer, 1, 3), []);
+  } finally {
+    await store.close();
+  }
+});

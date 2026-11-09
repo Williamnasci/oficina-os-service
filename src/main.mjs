@@ -7,6 +7,8 @@ import { OsService, osRoutes } from './service.mjs';
 import { migrateIdentity } from './identity-schema.mjs';
 import { CustomerSqlRepository, VehicleSqlRepository } from './identity-repositories.mjs';
 import { IdentityRegistry, identityRoutes } from './identity.mjs';
+import { orderQueryRoutes } from './order-queries.mjs';
+import { authLookupRoutes } from './auth-lookup.mjs';
 
 const store = new PostgresStore(process.env.DATABASE_URL);
 await store.init();
@@ -16,7 +18,7 @@ const service = new OsService(store, { identity, timeoutMs: Number(process.env.S
 const broker = new Broker({ url: process.env.AMQP_URL, service: 'os', store, handle: event => service.consume(event), onDisconnect: () => process.exit(1) });
 await broker.init();
 const spec = JSON.parse(await readFile(new URL('../openapi.json', import.meta.url), 'utf8'));
-const app = await createHttp({ service: 'os', store, broker, routes: [...osRoutes(service), ...identityRoutes(identity)], spec, secret: process.env.JWT_SECRET, port: Number(process.env.PORT ?? 3000) });
+const app = await createHttp({ service: 'os', store, broker, routes: [...orderQueryRoutes(store, identity, service), ...osRoutes(service), ...identityRoutes(identity), ...authLookupRoutes(identity, process.env.OS_AUTH_LOOKUP_TOKEN)], spec, secret: process.env.JWT_SECRET, port: Number(process.env.PORT ?? 3000) });
 const stop = startWorkers(broker, service);
 let shuttingDown = false;
 async function shutdown() {

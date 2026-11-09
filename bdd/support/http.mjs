@@ -27,10 +27,10 @@ export async function pay(orderId) {
   await request('billing', `/payments/webhook?data.id=${payment.id}`, { type: 'payment', data: { id: payment.id } }, { 'x-signature': `ts=${ts},v1=${signature}`, 'x-request-id': requestId });
   return payment;
 }
-export async function openAndApprove(failure = false) {
+export async function openAndQuote(failure = false, stockItems = [], expectedAmountCents = 15000) {
   await Promise.all(['os', 'billing', 'execution'].map(service => waitFor(service, '/ready', data => data.status === 'ready')));
   const key = randomUUID();
-  const opening = { customer: { name: 'Cliente BDD', documentType: 'CPF', document: '52998224725', email: 'bdd@example.com' }, vehicle: { licensePlate: 'BDD1A23', brand: 'Fiat', model: 'Uno', year: 2020 }, services: [], stockItems: [] };
+  const opening = { customer: { name: 'Cliente BDD', documentType: 'CPF', document: '52998224725', email: 'bdd@example.com' }, vehicle: { licensePlate: 'BDD1A23', brand: 'Fiat', model: 'Uno', year: 2020 }, services: [], stockItems };
   const order = await request('os', '/service-orders/opening', opening, { 'Idempotency-Key': key });
   const duplicate = await request('os', '/service-orders/opening', opening, { 'Idempotency-Key': key });
   assert.equal(duplicate.id, order.id);
@@ -38,10 +38,14 @@ export async function openAndApprove(failure = false) {
   await request('billing', '/service-catalog/bdd-filter', { name: 'Filtro e mão de obra', unitPriceCents: 15000 }, { 'Idempotency-Key': 'bdd-catalog-v1' });
   await request('execution', `/executions/${order.id}/diagnosis`, { diagnosis: failure ? 'TEST:FAIL_QUEUE' : 'Trocar filtro', lines: [{ description: 'Preço informado pelo solicitante', serviceId: 'bdd-filter', quantity: 1, unitPriceCents: 1 }] });
   await waitFor('os', `/service-orders/${order.id}`, data => data.status === 'WAITING_APPROVAL');
-  assert.equal((await request('billing', `/budgets/${order.id}`)).amountCents, 15000);
-  await request('billing', `/budgets/${order.id}/decision`, { decision: 'APPROVED' });
-  await waitFor('os', `/service-orders/${order.id}`, data => data.status === 'WAITING_PAYMENT' && data.checkout);
+  assert.equal((await request('billing', `/budgets/${order.id}`)).amountCents, expectedAmountCents);
   return order.id;
+}
+export async function openAndApprove(failure = false, stockItems = [], expectedAmountCents = 15000) {
+  const id = await openAndQuote(failure, stockItems, expectedAmountCents);
+  await request('billing', `/budgets/${id}/decision`, { decision: 'APPROVED' });
+  await waitFor('os', `/service-orders/${id}`, data => data.status === 'WAITING_PAYMENT' && data.checkout);
+  return id;
 }
 export async function openZeroQuote() {
   const admin = jwt.sign({ sub: 'admin-test', role: 'admin' }, secret, { expiresIn: '10m' });
@@ -73,3 +77,9 @@ export async function compensatedFlow() {
   assert.equal((await request('simulator', `/v1/payments/${payment.id}`)).status, 'refunded');
   return { orderId: id, status: result.status, history: result.history };
 }
+
+export async function createStockFixture() {
+  const admin = jwt.sign({ sub: 'admin-test', role: 'admin' }, secret, { expiresIn: '10m' });
+  return request('execution', '/stock-items', { name: 'Pastilha BDD', quantity: 3, unitPrice: 50 }, { Authorization: `Bearer ${admin}` });
+}
+export const stockAvailability = id => request('execution', `/stock-items/${id}/availability`);

@@ -25,7 +25,7 @@ services:
     volumes: [billing-data:/var/lib/postgresql/data]
     healthcheck: { test: ['CMD-SHELL', 'pg_isready -U billing -d billing'], interval: 3s, timeout: 3s, retries: 30 }
   mongodb:
-    image: mongo:8
+    image: ${BDD_MONGO_IMAGE:-mongo:8}
     environment: { MONGO_INITDB_ROOT_USERNAME: execution, MONGO_INITDB_ROOT_PASSWORD: local-execution-password }
     ports: ['127.0.0.1:17018:27017']
     volumes: [execution-data:/data/db]
