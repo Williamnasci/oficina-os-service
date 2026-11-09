@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import { NotFoundError } from './infrastructure/contracts.mjs';
 
+const pageSchema = z.object({
+  limit: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1).max(100)).optional().default(50),
+  offset: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(0).max(2147483647)).optional().default(0),
+});
+
 export const publicOrderStatus = data => data.legacyStatus ?? ({ DIAGNOSING: 'IN_DIAGNOSIS', QUOTING: 'IN_DIAGNOSIS', WAITING_PAYMENT: 'APPROVED', QUEUING: 'APPROVED' })[data.status] ?? data.status;
 
 export function orderProjection(id, data, details = false) {
@@ -20,11 +25,12 @@ export function orderProjection(id, data, details = false) {
 export function orderQueryRoutes(store, identity, service) {
   return [
     { method: 'get', path: '/service-orders', roles: ['admin'], handle: async req => {
-      if (req.query.document === undefined) return (await store.listOrders()).map(({ id, data }) => orderProjection(id, data));
+      const { limit, offset } = pageSchema.parse(req.query);
+      if (req.query.document === undefined) return (await store.listOrders(null, limit, offset)).map(({ id, data }) => orderProjection(id, data));
       const doc = z.string().max(30).transform(value => value.replace(/\D/g, '')).pipe(z.string().regex(/^(?:\d{11}|\d{14})$/)).parse(req.query.document);
       const customer = await identity.customers.findByDocument(doc);
       if (!customer) throw new NotFoundError('Customer not found.');
-      return (await store.listOrders(customer.id)).map(({ id, data }) => orderProjection(id, data, true));
+      return (await store.listOrders(customer.id, limit, offset)).map(({ id, data }) => orderProjection(id, data, true));
     } },
     { method: 'get', path: '/service-orders/operational-queue', roles: ['admin'], handle: async () => (await store.operationalOrders()).map(({ id, data }) => orderProjection(id, data)) },
     { method: 'get', path: '/service-orders/metrics/average-execution-time', roles: ['admin'], handle: async () => {

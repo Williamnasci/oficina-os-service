@@ -12,12 +12,18 @@ test('legacy reads project frozen snapshots, customer filters and execution dura
   assert.equal(row.status, 'APPROVED'); assert.equal(row.sagaStatus, 'WAITING_PAYMENT'); assert.equal(row.totalAmount, 250);
   assert.equal(row.stockItems[0].totalPrice, 100); assert.equal(row.services[0].unitPrice, 150);
   assert.equal(orderProjection(id, { status: 'DIAGNOSING' }).totalAmount, null);
-  const store = { listOrders: async customer => { assert.ok(!customer || customer === 'c1'); return [{ id, data }]; }, operationalOrders: async () => [{ id, data }], averageExecutionMinutes: async () => 65 };
+  const pages = [];
+  const store = { listOrders: async (...page) => { pages.push(page); return [{ id, data }]; }, operationalOrders: async () => [{ id, data }], averageExecutionMinutes: async () => 65 };
   const routes = orderQueryRoutes(store, { customers: { findByDocument: async doc => doc === '52998224725' ? { id: 'c1' } : null } }, { get: async () => data });
   assert.equal((await routes[0].handle({ query: {} })).length, 1);
   assert.equal((await routes[0].handle({ query: { document: '529.982.247-25' } }))[0].stockItems.length, 1);
   await assert.rejects(routes[0].handle({ query: { document: '11144477735' } }), /Customer not found/);
   await assert.rejects(routes[0].handle({ query: { document: 'bad' } }));
+  await routes[0].handle({ query: { document: '529.982.247-25', limit: '20', offset: '40' } });
+  assert.deepEqual(pages, [[null, 50, 0], ['c1', 50, 0], ['c1', 20, 40]]);
+  for (const query of [{ limit: '101' }, { limit: '0' }, { offset: '-1' }, { limit: ['10', '20'] }, { offset: '1.5' }]) {
+    await assert.rejects(routes[0].handle({ query }));
+  }
   assert.equal((await routes[1].handle())[0].status, 'APPROVED');
   assert.equal((await routes[2].handle()).averageExecutionTimeFormatted, '1h 5m');
   assert.equal((await routes[3].handle({ params: { id } })).services.length, 1);
