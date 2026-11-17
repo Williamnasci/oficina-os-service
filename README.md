@@ -44,7 +44,7 @@ Autenticação HS256 compatível com o segredo do emissor da Fase 3. Cliente só
 
 ## Qualidade e evidências
 
-25 testes nativos e 46 testes originais de clientes/veículos; cobertura de linhas/branches/funções/statements com gate >=80%. Análise estática bloqueante via ESLint + regras SonarJS, além de TypeScript strict. Adapters HTTP/banco/broker estão incluídos na cobertura; apenas o ponto de composição `src/main.mjs` é excluído e exercitado pelos containers/BDD.
+28 testes nativos, 46 testes originais de clientes e veículos e 6 testes de integração com PostgreSQL; cobertura de linhas/branches/funções/statements com gate >=80%. Análise estática bloqueante via ESLint + regras SonarJS, além de TypeScript strict. Adapters HTTP/banco/broker estão incluídos na cobertura; apenas o ponto de composição `src/main.mjs` é excluído e exercitado pelos containers/BDD.
 
 Relatórios LCOV são gerados em `coverage/lcov.info` e publicados como artifacts no [CI](https://github.com/Williamnasci/oficina-os-service/actions). Não declarar execução de SonarQube Cloud: a alternativa adotada é SonarJS/ESLint. `sonar-project.properties` prepara integração futura com SonarQube.
 
@@ -58,17 +58,17 @@ Deploy remoto requer `KUBE_CONFIG` no environment `fase4`, Secrets `service-secr
 
 ## Limites desta implementação
 
-Dados da Fase 3 ainda não foram migrados. Estoque/reservas, revisão de orçamento e CRUD legado ainda precisam ser extraídos. Não substituir a API antiga sem backfill e testes de regressão. O orçamento admite serviços do catálogo próprio de Billing (preço canônico substitui valores do solicitante) e linhas manuais de diagnóstico informadas por operador autorizado. Os valores são congelados no orçamento.
+A API oferece revisão de orçamento na mesma OS, com identificador por tentativa e histórico de orçamentos anteriores. A listagem administrativa GET /service-orders aceita limit e offset, com 50 registros por padrão e máximo de 100. O endpoint interno de consulta CPF é habilitado com OS_AUTH_LOOKUP_TOKEN. O login pela Lambda continua no modo legacy até a conferência dos dados de destino e a validação do endpoint HTTPS. Algumas rotas de escrita da API legada ainda estão fora do recorte extraído. [Contratos, paginação e revisão de orçamento](docs/phase4-nov09.md)
 
 ## BDD distribuído
 
-O [workflow BDD](.github/workflows/bdd.yml) obtém os repositórios Billing/Execution e sobe [o ambiente de teste](bdd/compose.yml). Os dois cenários [Cucumber](bdd/flow.feature) usam APIs, bancos e RabbitMQ reais com simulador financeiro explícito. O primeiro verifica entrega; o segundo injeta falha de fila e exige cancelamento/reembolso antes de COMPENSATED.
+O [workflow BDD](.github/workflows/bdd.yml) obtém os repositórios Billing/Execution e sobe [o ambiente de teste](bdd/compose.yml). Os três cenários [Cucumber](bdd/flow.feature) exercitam entrega, compensação por falha de fila e orçamento de total zero com APIs, bancos e RabbitMQ reais. O BDD usa um simulador financeiro local. A suíte estendida, com seis cenários, também cobre reserva e baixa de estoque e revisão de orçamento.
 
 Para executar com os três repositórios em diretórios irmãos:
 
 ```sh
 docker compose -f bdd/compose.yml up -d --build
-npm run test:bdd
+npm run test:bdd:stock
 ```
 
 As portas 18080-18083 devem estar livres. Se o ambiente local da Fase 4 já estiver ativo nessas portas, execute apenas o BDD contra ele.
